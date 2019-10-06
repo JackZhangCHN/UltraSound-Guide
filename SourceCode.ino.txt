@@ -1,0 +1,81 @@
+#include <Arduino.h>
+#include <Wire.h>
+#include <Servo.h>
+#include <SoftwareSerial.h>
+
+
+double angle_rad = PI/180.0;
+double angle_deg = 180.0/PI;
+void(* resetFunc) (void) = 0;
+double flag;
+double inCM2;
+double inCM;
+double inCM3;
+
+void setup(){
+    pinMode(6,OUTPUT);
+    pinMode(7,INPUT);
+    pinMode(5,OUTPUT);
+    pinMode(11,OUTPUT);
+    pinMode(2,OUTPUT);
+    pinMode(3,INPUT);
+    pinMode(8,OUTPUT);
+    pinMode(9,INPUT);
+    
+}
+
+void loop(){
+    
+    if(((flag)==(1))){                     //right
+        digitalWrite(6,0);
+        delay(1000*0.002);
+        digitalWrite(6,1);
+        delay(1000*0.01);
+        digitalWrite(6,0);
+        inCM2 = (pulseIn(7,HIGH,0)) / (58);
+        if((inCM2) < (30)){
+            digitalWrite(5,1);
+            digitalWrite(11,1);
+            delay(1000*(inCM2) / (20));
+            digitalWrite(5,0);
+            digitalWrite(11,0);
+        }
+    }
+    if(((flag)==(1))){                 //middle
+        digitalWrite(2,0);
+        delay(1000*0.002);
+        digitalWrite(2,1);
+        delay(1000*0.01);
+        digitalWrite(2,0);
+        inCM = (pulseIn(3,HIGH,0)) / (58);
+        if((inCM) < (30)){
+            digitalWrite(5,1);
+            digitalWrite(11,1);
+            delay(1000*(inCM) / (20));
+            digitalWrite(5,0);
+            digitalWrite(11,0);
+        }
+    }
+    if(((flag)==(1))){                  //left
+        digitalWrite(8,0);
+        delay(1000*0.002);
+        digitalWrite(8,1);
+        delay(1000*0.01);
+        digitalWrite(8,0);
+        inCM3 = (pulseIn(9,HIGH,0)) / (58);
+        if((inCM3) < (30)){
+            digitalWrite(11,1);
+            delay(1000*(inCM3) / (20));
+            digitalWrite(11,0);
+        }
+    }
+    if(digitalRead(9)){
+        flag = 1;
+    }else{
+        flag = 0;
+    }
+    if(((flag)==(0))){
+        resetFunc(); //reset arduino
+    }
+    
+}

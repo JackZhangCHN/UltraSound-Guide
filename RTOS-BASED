@@ -1,0 +1,173 @@
+/* If you spread this code to anyone else than judger in this race, 
+ *  please DO NOT change it!
+ *  Massive thanks to: https://github.com/feilipu/Arduino_FreeRTOS_Library
+ *  This is licensed under the MIT License.
+ */
+
+/*
+7
+3
+9
+--ULTRASOUND
+*/
+
+
+
+#include <Arduino.h>
+#include <Wire.h>
+#include <Servo.h>
+#include <SoftwareSerial.h>
+
+#include <Arduino_FreeRTOS.h>
+
+//------------------------------------------------------------------------------
+//源程序需要的变量
+double angle_rad = PI/180.0;
+double angle_deg = 180.0/PI;
+void(* resetFunc) (void) = 0;
+double flag;
+double inCM2;
+double inCM;
+double inCM3;
+bool fflag = 0;
+bool MoveS = 0;
+//------------------------------------------------------------------------------
+
+
+//------------------------------------------------------------------------------
+//Ultrasound
+static void vULTRAFlashTask(void *pvParameters) {
+  
+    pinMode(6,OUTPUT);  //TRIG
+    pinMode(7,INPUT);   //ECHO
+    pinMode(5,OUTPUT);
+    pinMode(11,OUTPUT);
+    pinMode(2,OUTPUT);
+    pinMode(3,INPUT);
+    pinMode(8,OUTPUT);
+    pinMode(9,INPUT);
+//------------------------------------------------------------------------------  
+
+  for (;;) {
+        flag = 1;
+    if(((flag)==(1))){                     //right
+        digitalWrite(6,0);
+        delay(1000*0.002);
+        digitalWrite(6,1);
+        delay(1000*0.01);
+        digitalWrite(6,0);
+        inCM2 = (pulseIn(7,HIGH,0)) / (58);
+        if((inCM2) < (40)){
+            digitalWrite(5,1);
+            delay(1000*(inCM2) / (30));
+//            vTaskDelay(((inCM2) / (30) * configTICK_RATE_HZ) / 1000L);
+            (1000*(inCM2) / (30));
+            digitalWrite(5,0);
+            delay(1000*(inCM2) / (30));
+
+ //           vTaskDelay(((inCM2) / (30) * configTICK_RATE_HZ) / 1000L);
+        }
+    }
+    
+    if(((flag)==(1))){                 //middle
+        digitalWrite(2,0);
+        delay(1000*0.002);
+        digitalWrite(2,1);
+        delay(1000*0.01);
+        digitalWrite(2,0);
+        inCM = (pulseIn(3,HIGH,0)) / (58);
+        if((inCM) < (40)){
+            digitalWrite(5,1);
+            digitalWrite(11,1);
+            delay(1000*(inCM) / (30));
+           // vTaskDelay(((inCM) / (30) * configTICK_RATE_HZ) / 1000L);
+            digitalWrite(5,0);
+            digitalWrite(11,0);
+            delay(1000*(inCM) / (30));
+            
+           // vTaskDelay(((inCM) / (30) * configTICK_RATE_HZ) / 1000L);;
+        }
+    }
+    if(((flag)==(1))){                  //left
+        digitalWrite(8,0);
+        delay(1000*0.002);
+        digitalWrite(8,1);
+        delay(1000*0.01);
+        digitalWrite(8,0);
+        inCM3 = (pulseIn(9,HIGH,0)) / (58);
+        if((inCM3) < (40)){
+            digitalWrite(11,1);
+            //Serial.println("debug1-ultra");
+            delay(1000*(inCM3) / (30));
+ //           vTaskDelay(((inCM3) / (1000) * configTICK_RATE_HZ) / 1000L);
+            digitalWrite(11,0);
+            delay(1000*(inCM3) / (30));
+ //           vTaskDelay(((inCM3) / (1000) * configTICK_RATE_HZ) / 1000L);
+        }
+    }
+    if(digitalRead(9)){
+        flag = 1;
+    }else{
+        flag = 0; ////0->1 !!!REMEMBER TO TURN IT BACK!
+    }
+  }
+}
+//------------------------------------------------------------------------------
+
+
+static void LEDTask(void *pvParameters) { 
+  pinMode(10,OUTPUT);
+  pinMode(12,INPUT); //virbration
+  pinMode(A0+0,INPUT); 
+  pinMode(4,INPUT);
+
+  for (;;) {
+    if (!digitalRead(4)) MoveS = 1;
+    if (MoveS && !digitalRead(12) && (150 > analogRead(A0+0))) fflag = 1;   //  SOMETHING CANCELED
+    if (fflag){
+     //      Serial.println("debug2-led");
+          digitalWrite(10,1);
+          vTaskDelay((350L * configTICK_RATE_HZ) / 1000L);
+          digitalWrite(10,0);
+          vTaskDelay((350L * configTICK_RATE_HZ) / 1000L);
+
+
+     
+    }
+  }
+}
+//------------------------------------------------------------------------------
+void setup() {
+ // Serial.begin(9600);
+//Create sub-ULTRA
+  xTaskCreate(vULTRAFlashTask,
+    "Ultrasound",
+    configMINIMAL_STACK_SIZE + 150,
+    NULL,
+    tskIDLE_PRIORITY + 2,
+    NULL);
+
+
+//Create sub-LED
+  xTaskCreate(LEDTask,
+    "LED",
+    configMINIMAL_STACK_SIZE + 150,
+    NULL,
+    tskIDLE_PRIORITY + 2,
+    NULL);
+      
+    
+  // boot
+  vTaskStartScheduler();
+
+
+//  while(1);
+}
+//------------------------------------------------------------------------------
+void loop() {
+
+  while(1) {
+    noInterrupts();
+    interrupts();
+  }
+}
